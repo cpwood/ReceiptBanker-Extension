@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "Receipt Banker",
+    "description": "The name of the application"
+  },
+  "appDescription": {
+    "message": "Submit invoices and receipts to Receipt Bank with one click.",
+    "description": "The description of the application"
+  }
+}

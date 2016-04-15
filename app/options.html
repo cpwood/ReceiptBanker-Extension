@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <!-- build:css styles/options-vendor.css -->
+    <!-- bower:css -->
+    <!-- endbower -->
+    <!-- endbuild -->
+    <!-- build:css styles/main.css -->
+    <link href="styles/main.css" rel="stylesheet">
+    <!-- endbuild -->
+  </head>
+  <body>
+  <div class="optionsContainer">
+    <div><label for="email">Receipt Bank email address:</label></div>
+    <div><input type="text" id="email" /><span class="emailDomain">@receiptbank.me</span></div>
+    <div><button id="save">Save</button></div>
+    <div id="status"><img src="images/ok.png" /> Your settings have been saved.</div>
+    <div id="fail"><img src="images/error.png" /> That's not a valid email address.</div>
+  </div>
+
+    <!-- build:vendor -->
+    <!-- bower:js -->
+    <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/jquery-ui/jquery-ui.js"></script>
+    <!-- endbower -->
+    <!-- endbuild -->
+
+    <!-- build:js scripts/options.js -->
+    <script src="scripts/options.js"></script>
+    <!-- endbuild -->
+  </body>
+</html>

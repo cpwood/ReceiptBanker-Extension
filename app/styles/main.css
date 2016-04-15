@@ -1,0 +1,64 @@
+body {
+  padding: 20px;
+}
+
+.emailDomain {
+  font-weight: bold;
+}
+
+.fieldLabel {
+  font-weight: bold;
+}
+
+.optionsContainer div {
+  margin-bottom: 10px;
+}
+
+#status {
+  display: none;
+  float: left;
+  color: #008800;
+}
+
+#status img {
+  vertical-align: bottom;
+  height: 15px;
+}
+
+#fail {
+  display: none;
+  float: left;
+  color: red;
+}
+
+#fail img {
+  vertical-align: bottom;
+  height: 15px;
+}
+
+#popupContainer {
+  display: block;
+  height: 20px;
+  width: 300px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  font-size: 0.8em;
+}
+
+.progress-label {
+  float: left;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+}
+
+#progressbar {
+  background-color: #f5f5f5;
+  border: 1px solid #e0e0e0;
+}
+
+#progressbar .ui-progressbar-value {
+  background-color: #5cb85c;
+}
