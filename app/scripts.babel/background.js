@@ -15,11 +15,7 @@ function handleDom(parts) {
     chrome.browserAction.setBadgeText({text: ''});
 
     if (parts != null) {
-      if ($(parts.body)[0].nodeName == 'EMBED' && $(parts.body)[0].type == 'application/pdf')
-      {
-        processPdf($(parts.body)[0].src);
-      }
-      else if (tab.url.indexOf('mail.google.com') > -1 && $(parts.body).find('span[download_url]') != null) {
+      if (tab.url.indexOf('mail.google.com') > -1 && $(parts.body).find('span[download_url]') != null) {
         var url = $($(parts.body).find('span[download_url]')).attr('download_url');
         url = url.substr(url.indexOf('http'));
         processPdf(url);
@@ -57,9 +53,40 @@ chrome.runtime.onMessage.addListener( function (message) {
     reset();
     tab = message.tab;
     processing = true;
-    chrome.tabs.sendMessage(message.tab.id, {text: 'get_dom'}, handleDom);
+    if(tabMimeTypes[tab.id] == 'application/pdf'){
+      processPdf(tab.url);
+    }
+    else{
+      // Try to get contents from HTML page
+      chrome.tabs.sendMessage(message.tab.id, {text: 'get_dom'}, handleDom);
+    }
   }
 });
+
+// Content scripts are not injected on to PDF type pages, so this snippet
+// tracks the mime types of each tab using the webRequest API and then we can
+// match them up.
+// From http://stackoverflow.com/questions/4921175/how-can-i-detect-the-current-tabs-mime-type-in-a-google-chrome-extension
+var tabMimeTypes = {};
+chrome.webRequest.onHeadersReceived.addListener(function(details) {
+    if (details.tabId !== -1) {
+        var header = getHeaderFromHeaders(details.responseHeaders, 'content-type');
+        // If the header is set, use its value. Otherwise, use undefined.
+        tabMimeTypes[details.tabId] = header && header.value.split(';', 1)[0];
+    }
+}, {
+    urls: ['*://*/*'],
+    types: ['main_frame']
+}, ['responseHeaders']);
+
+function getHeaderFromHeaders(headers, headerName) {
+  for (var i = 0; i < headers.length; ++i) {
+      var header = headers[i];
+      if (header.name.toLowerCase() === headerName) {
+          return header;
+      }
+  }
+}
 
 function reset() {
   processing = false;

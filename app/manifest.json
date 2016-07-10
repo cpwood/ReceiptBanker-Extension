@@ -18,7 +18,9 @@
   "permissions": [
     "background",
     "storage",
-    "activeTab"
+    "activeTab",
+    "webRequest",
+    "*://*/*"
   ],
   "options_ui": {
     "page": "options.html",
