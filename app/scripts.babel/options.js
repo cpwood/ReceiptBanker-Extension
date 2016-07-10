@@ -8,7 +8,11 @@ $('#save').click(function() {
   if (emailRegex.test(email + '@receiptbank.me'))
   {
     chrome.storage.sync.set({
-      email: email
+      email: email,
+      sendingService: $('#sendingService').val(),
+      sendgridUser: $('#sendgridUser').val(),
+      sendgridKey: $('#sendgridKey').val(),
+      emailCC: $('#emailCC').val(),
     }, function() {
       $('#status').fadeIn().delay(3000).fadeOut();
     });
@@ -23,8 +27,16 @@ $('#save').click(function() {
 
 $( document ).ready(function() {
   chrome.storage.sync.get({
-    email: ''
+    email: '',
+    sendingService: '',
+    sendgridUser: '',
+    sendgridKey: '',
+    emailCC: '',
   }, function(items) {
     $('#email').val(items.email);
+    $('#sendingService').val(items.sendingService);
+    $('#sendgridUser').val(items.sendgridUser);
+    $('#sendgridKey').val(items.sendgridKey);
+    $('#emailCC').val(items.emailCC);
   });
 });

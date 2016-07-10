@@ -5,6 +5,14 @@ var postUrl = 'https://receiptbanker.azurewebsites.net/api/data/';
 var processing = false;
 var tab = null;
 
+const requiredConfig = {
+  email: '',
+  sendingService: '',
+  sendgridUser: '',
+  sendgridKey: '',
+  emailCC: ''
+}
+
 chrome.runtime.onInstalled.addListener(details => {
   console.log('previousVersion', details.previousVersion);
 });
@@ -314,29 +322,14 @@ function processHtml()
 
       chrome.runtime.sendMessage({progress: 50});
 
-      // POST to https://zapier.com/hooks/catch/43538/u3fvsq/
-      chrome.storage.sync.get({
-        email: ''
-      }, function(items) {
-        if (items.email == '')
-        {
-          alert('You haven\'t told us your Receipt Bank email address yet!');
-          reset();
-          chrome.runtime.sendMessage({closeWindow: true});
-          chrome.runtime.openOptionsPage();
-          return;
-        }
-
+      chrome.storage.sync.get(requiredConfig, function(userConfig ) {
         var data = {
-          email: items.email + '@receiptbank.me',
+          email: userConfig .email + '@receiptbank.me',
           html: html,
           attachment: null,
           filename: null
         };
-
-        $.post(postUrl, data);
-        sendComplete();
-        reset();
+        sendData(data, userConfig );
       });
 
     });
@@ -348,53 +341,117 @@ function processHtml()
 
 function processPdf(url) {
   var req = new XMLHttpRequest();
-  req.responseType = 'arraybuffer';
+  req.responseType = 'blob';
   req.onload = function() {
     if (req.status == 200) {
-      chrome.storage.sync.get({
-        email: ''
-      }, function(items) {
+      chrome.storage.sync.get(requiredConfig, function(userConfig ) {
         chrome.runtime.sendMessage({progress: 50});
-
-        if (items.email == '')
-        {
-          alert('You haven\'t told us your Receipt Bank email address yet!');
-          reset();
-          chrome.runtime.sendMessage({closeWindow: true});
-          chrome.runtime.openOptionsPage();
-          return;
-        }
 
         var parser = document.createElement('a');
         parser.href = url;
 
-        var uInt8Array = new Uint8Array(req.response);
-        var i = uInt8Array.length;
-        var binaryString = new Array(i);
-        while (i--)
-        {
-          binaryString[i] = String.fromCharCode(uInt8Array[i]);
-        }
-        var temp = binaryString.join('');
-
-        var base64 = btoa(temp);
-
         var data = {
-          email: items.email + '@receiptbank.me',
+          email: userConfig .email + '@receiptbank.me',
           html: '<p>No content</p>',
-          attachment: base64,
-          filename: parser.pathname.substr(parser.pathname.lastIndexOf('/') + 1)
+          attachment: req.response,
+          filename: parser.pathname.substr(parser.pathname.lastIndexOf('/') + 1) || 'attachment.pdf'
         };
-
-        $.post(postUrl, data);
-        sendComplete();
-        reset();
+        sendData(data, userConfig );
       });
     }
   };
 
   req.open('GET', url);
   req.send();
+}
+
+function requireFields(userConfig, fields){
+  fields.forEach(function(field){
+    if (userConfig  [field] == ''){
+      alert('You haven\'t configured Receipt Bank Extension yet! \n Looking for field '+field+' in config');
+      reset();
+      chrome.runtime.sendMessage({closeWindow: true});
+      chrome.runtime.openOptionsPage();
+      return;
+    }
+  });
+}
+
+function sendData(data, userConfig){
+  console.log("about to send!")
+  var sendType = userConfig .sendingService
+  if(sendType ==  'apiService'){
+
+    requireFields(userConfig  , ['email']);
+    
+    if(data.attachment){
+      // This converts the blob to an array buffer and then encodes for
+      // cpwood's API.
+      var arrayBuffer;
+      var fileReader = new FileReader();
+      fileReader.onload = function() {
+          arrayBuffer = this.result;
+          var uInt8Array = new Uint8Array(data.attachment);
+          var i = uInt8Array.length;
+          var binaryString = new Array(i);
+          while (i--){
+            binaryString[i] = String.fromCharCode(uInt8Array[i]);
+          }
+          var temp = binaryString.join('');
+          data.attachment = btoa(temp);
+          $.post(postUrl, data);
+          sendComplete();
+          reset();
+      };
+      fileReader.readAsArrayBuffer(blob);
+    }
+    else{
+      // Send right away if all is well
+      // TODO: probably should have sendComplete as a callback?
+      $.post(postUrl, data);
+      sendComplete();
+      reset();
+    }
+  }
+  else if(sendType == 'sendgrid'){
+
+    requireFields(userConfig, ['sendgridUser', 'sendgridKey', 'email'])
+
+    var sendgridEndpoint = 'https://api.sendgrid.com/api/mail.send.json'
+    var sendgridData = {
+      api_user: userConfig  .sendgridUser,
+      api_key: userConfig .sendgridKey,
+      to: [data.email],
+      subject: 'Invoice for processing',
+      from: 'chromeextention',
+      html: data.html,
+    };
+    var formData = new FormData();
+    $.each(sendgridData, function(key, val){ formData.append(key, val); })
+
+    //Add the attachment if there is one (already in a Blob)
+    if(data.attachment){
+      formData.append('files['+data.filename+']', data.attachment, data.filename);
+    }
+
+    //If the user wants everything CC'd to them
+    if(userConfig .emailCC){
+      formData.append('cc', [userConfig.emailCC]);
+    }
+
+    var xhr = $.ajax({
+      url: sendgridEndpoint, 
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(){
+        sendComplete();
+        reset();
+      },
+      error: sendError,
+    });
+  }
 }
 
 function arrayBufferToBase64( buffer ) {
@@ -418,8 +475,11 @@ function sendComplete() {
   }, 3000);
 }
 
-function sendError() {
+function sendError(message) {
   chrome.browserAction.setBadgeBackgroundColor({ color: '#ff0000'});
   chrome.browserAction.setBadgeText({text: '!'});
-  chrome.runtime.sendMessage({closeWindow: true});
+  chorome.runtime.sendMessage({errorMessage: message})
+  setTimeout(function() {
+    chrome.runtime.sendMessage({closeWindow: true});
+  }, 3000);
 }
