@@ -13,6 +13,27 @@
   <div class="optionsContainer">
     <div><label for="email">Receipt Bank email address:</label></div>
     <div><input type="text" id="email" /><span class="emailDomain">@receiptbank.me</span></div>
+    
+    <div><label for="sendingService">Sending service to use:</label></div>
+    <div>
+      <select id="sendingService">
+        <option value="apiService">cpwoods API</option>
+        <option value="sendgrid">Sendgrid API</option>
+      </select>
+    </div>
+
+    <div>
+      <span class="title">Sendgrid specific settings</span>
+      <div><label for="sendgridUser">Sendgrid user name:</label></div>
+      <div><input type="text" id="sendgridUser" /></div>
+
+      <div><label for="sendgridKey">Sendgrid password:</label></div>
+      <div><input type="text" id="sendgridKey" /></div>
+
+      <div><label for="emailCC">(Sendgrid only) CC all reciepts to:</label></div>
+      <div><input type="text" id="emailCC" /></div>
+    </div>
+
     <div><button id="save">Save</button></div>
     <div id="status"><img src="images/ok.png" /> Your settings have been saved.</div>
     <div id="fail"><img src="images/error.png" /> That's not a valid email address.</div>

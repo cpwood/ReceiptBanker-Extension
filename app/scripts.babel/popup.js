@@ -29,4 +29,8 @@ chrome.runtime.onMessage.addListener( function (message) {
   {
     window.close();
   }
+  else if (message.errorMessage)
+  {
+    progressLabel.text(message.errorMessage)
+  }
 });
